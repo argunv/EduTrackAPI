@@ -1,0 +1,40 @@
+exclude_dirs:
+  - tests
+  - venv
+  - .venv
+  - build
+  - dist
+  - *.egg-info
+
+skips:
+  - B101  # assert_used
+  - B601  # shell_injection_subprocess
+
+tests:
+  - B201  # flask_debug_true
+  - B301  # blacklist_calls
+  - B302  # blacklist_imports
+  - B303  # blacklist_imports
+  - B304  # blacklist_imports
+  - B305  # blacklist_imports
+  - B306  # blacklist_imports
+  - B501  # request_with_no_cert_validation
+  - B506  # yaml_load
+  - B602  # subprocess_popen_with_shell_equals_true
+  - B603  # subprocess_without_shell_equals_true
+  - B604  # any_other_function_with_shell_equals_true
+  - B605  # start_process_with_a_shell
+  - B606  # start_process_with_no_shell
+  - B607  # start_process_with_partial_path
+  - B608  # hardcoded_sql_expressions
+  - B609  # linux_commands_wildcard_injection
+  - B610  # django_extra_used
+  - B611  # django_rawsql_used
+  - B701  # jinja2_autoescape_false
+  - B702  # use_of_mako_templates
+  - B703  # django_mark_safe
+  - B704  # use_of_yaml_load
+  - B705  # use_of_jinja2_autoescape_false
+  - B706  # use_of_mako_templates
+  - B707  # use_of_django_mark_safe
+
