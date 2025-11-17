@@ -42,3 +42,27 @@ tasks:
         echo "" > docker-compose.log
       - echo "Файл docker-compose.log очищен"
 
+  lint:
+    desc: "Запустить все линтеры"
+    cmds:
+      - poetry run ruff check src/ tests/
+      - poetry run flake8 src/ tests/
+      - poetry run mypy src/ --ignore-missing-imports || true
+
+  lint-fix:
+    desc: "Исправить проблемы линтеров автоматически"
+    cmds:
+      - poetry run ruff check --fix src/ tests/
+
+  security:
+    desc: "Проверить безопасность кода"
+    cmds:
+      - poetry run bandit -r src/ -f json -o bandit-report.json
+      - poetry run safety scan --json || true
+
+  ci:
+    desc: "Запустить все проверки (линтеры, тесты, безопасность)"
+    cmds:
+      - task: lint
+      - task: test
+      - task: security
