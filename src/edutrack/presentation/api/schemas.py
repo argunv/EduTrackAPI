@@ -1,6 +1,6 @@
-from datetime import datetime, date
-from typing import List
+from datetime import datetime
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -88,13 +88,13 @@ class GradeResponse(BaseModel):
 
 
 class GradeList(BaseModel):
-    items: List[GradeResponse]
+    items: list[GradeResponse]
 
 
 class MessageCreate(BaseModel):
     subject: str
     body: str
-    recipient_user_ids: List[UUID]
+    recipient_user_ids: list[UUID]
 
 
 class MessageResponse(BaseModel):
@@ -106,9 +106,4 @@ class MessageResponse(BaseModel):
 
 
 class EmailSendRequest(BaseModel):
-    recipients: List[EmailStr]
-
-
-
-
-
+    recipients: list[EmailStr]

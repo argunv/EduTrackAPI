@@ -1,9 +1,8 @@
-import pytest
 from types import SimpleNamespace
 from uuid import uuid4
 
+import pytest
 from edutrack.application.auth import AuthService
-from edutrack.infrastructure.services.security import hash_password
 from edutrack.application.grades import GradeService
 from edutrack.application.messages import MessageService
 from edutrack.application.schools import SchoolService
@@ -22,11 +21,19 @@ class DummySession:
 
 @pytest.mark.asyncio
 async def test_auth_service_success(monkeypatch):
-    user = SimpleNamespace(id=uuid4(), password_hash=hash_password("secret"))
+    # Mock verify_password to avoid bcrypt initialization issues in tests
+    def mock_verify_password(plain: str, hashed: str) -> bool:
+        return plain == "secret" and hashed == "hashed_secret"
+
+    user = SimpleNamespace(id=uuid4(), password_hash="hashed_secret")
 
     class Repo:
         async def get_by_email(self, email):
             return user
+
+    monkeypatch.setattr(
+        "edutrack.application.auth.verify_password", mock_verify_password
+    )
 
     service = AuthService(session=None)  # type: ignore
     service.users = Repo()  # type: ignore
@@ -141,9 +148,8 @@ async def test_school_service_caching(monkeypatch):
     monkeypatch.setattr("edutrack.application.schools.get_cache", fake_get_cache)
     monkeypatch.setattr("edutrack.application.schools.set_cache", fake_set_cache)
 
-    school = await service.create_school("S1", None)
+    await service.create_school("S1", None)
     assert called_invalidate["cnt"] == 1
     assert session.committed is True
     schools = await service.list_schools()
     assert len(schools) == 1
-

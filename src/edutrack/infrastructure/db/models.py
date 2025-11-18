@@ -1,20 +1,20 @@
 import enum
-from datetime import datetime, date
 import uuid
+from datetime import date, datetime
+
 from sqlalchemy import (
-    Column,
-    String,
-    DateTime,
-    ForeignKey,
-    Integer,
-    Text,
-    Enum,
-    UniqueConstraint,
     Boolean,
     Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
@@ -263,8 +263,3 @@ class EmailOutbox(Base):
     sent_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     message = relationship("Message", back_populates="outbox_entries")
-
-
-
-
-
