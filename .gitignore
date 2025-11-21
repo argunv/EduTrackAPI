@@ -11,3 +11,4 @@ pgdata/
 venv/
 *.log
 *.lock
+.automatization/
