@@ -1,9 +1,9 @@
 from datetime import datetime
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from edutrack.infrastructure.cache.redis import get_cache, set_cache, invalidate
+from edutrack.infrastructure.cache.redis import get_cache, invalidate, set_cache
 from edutrack.infrastructure.repositories.sqlalchemy import SqlAlchemyLessonRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 
 SCHEDULE_TTL = 120
 
@@ -45,18 +45,13 @@ class LessonService:
         lessons = await self.repo.list_for_class(class_id)
         data = [
             {
-                "id": str(l.id),
-                "topic": l.topic,
-                "start_at": l.start_at.isoformat(),
-                "end_at": l.end_at.isoformat(),
-                "subject_id": str(l.subject_id),
+                "id": str(lesson.id),
+                "topic": lesson.topic,
+                "start_at": lesson.start_at.isoformat(),
+                "end_at": lesson.end_at.isoformat(),
+                "subject_id": str(lesson.subject_id),
             }
-            for l in lessons
+            for lesson in lessons
         ]
         await set_cache(key, data, ttl_seconds=SCHEDULE_TTL)
         return data
-
-
-
-
-

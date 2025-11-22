@@ -1,6 +1,1 @@
-from .redis import redis, get_cache, set_cache, invalidate  # noqa: F401
-
-
-
-
-
+from .redis import get_cache, invalidate, redis, set_cache  # noqa: F401

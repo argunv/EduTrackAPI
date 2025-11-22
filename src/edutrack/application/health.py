@@ -1,9 +1,8 @@
 from aio_pika import connect_robust
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-
 from edutrack.config.settings import get_settings
 from edutrack.infrastructure.cache.redis import redis
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def check_health(session: AsyncSession):
@@ -33,4 +32,3 @@ async def check_health(session: AsyncSession):
 
     overall = db_ok and redis_ok and rabbit_ok
     return {"status": "ok" if overall else "degraded", "db": db_ok, "redis": redis_ok, "rabbitmq": rabbit_ok}
-

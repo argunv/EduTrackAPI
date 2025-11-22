@@ -1,35 +1,35 @@
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from edutrack.application.auth import AuthService
-from edutrack.application.schools import SchoolService
 from edutrack.application.classes import ClassService
-from edutrack.application.students import StudentService
-from edutrack.application.lessons import LessonService
 from edutrack.application.grades import GradeService
+from edutrack.application.lessons import LessonService
 from edutrack.application.messages import MessageService
+from edutrack.application.schools import SchoolService
+from edutrack.application.students import StudentService
+from edutrack.infrastructure.db.database import get_session
+from edutrack.presentation.api.dependencies.auth import get_current_user
 from edutrack.presentation.api.schemas import (
-    LoginRequest,
-    TokenResponse,
-    SchoolCreate,
-    SchoolResponse,
     ClassCreate,
     ClassResponse,
-    StudentCreate,
-    StudentResponse,
+    EmailSendRequest,
+    GradeCreate,
+    GradeList,
+    GradeResponse,
     LessonCreate,
     LessonResponse,
-    GradeCreate,
-    GradeResponse,
-    GradeList,
+    LoginRequest,
     MessageCreate,
     MessageResponse,
-    EmailSendRequest,
+    SchoolCreate,
+    SchoolResponse,
+    StudentCreate,
+    StudentResponse,
+    TokenResponse,
 )
-from edutrack.presentation.api.dependencies.auth import get_current_user
-from edutrack.infrastructure.db.database import get_session
-
 
 router = APIRouter(prefix="/api/v1")
 
@@ -177,8 +177,3 @@ async def send_message_email(
     service = MessageService(session)
     outbox = await service.enqueue_email(message_id=message_id, recipients_emails=payload.recipients)
     return {"outbox_id": str(outbox.id), "status": outbox.status.value}
-
-
-
-
-

@@ -199,8 +199,3 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS userrole")
     op.execute("DROP TYPE IF EXISTS attendancestatus")
     op.execute("DROP TYPE IF EXISTS messagedeliverystatus")
-
-
-
-
-

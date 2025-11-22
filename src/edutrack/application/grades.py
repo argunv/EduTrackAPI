@@ -1,8 +1,8 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from edutrack.infrastructure.cache.redis import get_cache, set_cache, invalidate
+from edutrack.infrastructure.cache.redis import get_cache, invalidate, set_cache
 from edutrack.infrastructure.repositories.sqlalchemy import SqlAlchemyGradeRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 
 GRADES_TTL = 60  # 1 минута
 
@@ -39,8 +39,3 @@ class GradeService:
         ]
         await set_cache(key, data, ttl_seconds=GRADES_TTL)
         return data
-
-
-
-
-

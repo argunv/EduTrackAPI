@@ -1,8 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from edutrack.infrastructure.cache.redis import get_cache, set_cache, invalidate
+from edutrack.infrastructure.cache.redis import get_cache, invalidate, set_cache
 from edutrack.infrastructure.db import models
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 SUBJECTS_CACHE_KEY = "cache:subjects"
 SUBJECTS_TTL = 600
@@ -28,8 +27,3 @@ class SubjectService:
         data = [{"id": str(s.id), "name": s.name} for s in subjects]
         await set_cache(SUBJECTS_CACHE_KEY, data, ttl_seconds=SUBJECTS_TTL)
         return data
-
-
-
-
-

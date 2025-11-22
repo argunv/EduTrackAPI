@@ -1,13 +1,13 @@
 import asyncio
 import json
 import logging
-from aio_pika import connect_robust, IncomingMessage
+
+from aio_pika import IncomingMessage, connect_robust
 
 from edutrack.config.settings import get_settings
 from edutrack.infrastructure.db.database import SessionLocal
-from edutrack.infrastructure.repositories.sqlalchemy import SqlAlchemyEmailOutboxRepository
 from edutrack.infrastructure.email.sender import send_email
-
+from edutrack.infrastructure.repositories.sqlalchemy import SqlAlchemyEmailOutboxRepository
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("edutrack.notifier")
@@ -55,8 +55,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
-
-

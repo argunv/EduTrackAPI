@@ -1,13 +1,13 @@
-from typing import Sequence
+from collections.abc import Sequence
 from uuid import UUID
+
+from edutrack.infrastructure.queue.publisher import EmailPublisher
+from edutrack.infrastructure.repositories.sqlalchemy import (
+    SqlAlchemyEmailOutboxRepository,
+    SqlAlchemyMessageRepository,
+)
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from edutrack.infrastructure.repositories.sqlalchemy import (
-    SqlAlchemyMessageRepository,
-    SqlAlchemyEmailOutboxRepository,
-)
-from edutrack.infrastructure.queue.publisher import EmailPublisher
 
 
 class MessageService:
@@ -37,8 +37,3 @@ class MessageService:
         await self.session.commit()
         await self.publisher.publish_outbox(str(outbox_entry.id))
         return outbox_entry
-
-
-
-
-

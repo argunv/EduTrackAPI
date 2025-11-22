@@ -1,15 +1,15 @@
 import json
-from typing import Any, Optional
+from typing import Any
+
 from redis.asyncio import Redis
 
 from edutrack.config.settings import get_settings
-
 
 settings = get_settings()
 redis = Redis.from_url(settings.redis_url, decode_responses=True)
 
 
-async def get_cache(key: str) -> Optional[Any]:
+async def get_cache(key: str) -> Any | None:
     raw = await redis.get(key)
     return json.loads(raw) if raw else None
 
@@ -20,8 +20,3 @@ async def set_cache(key: str, value: Any, ttl_seconds: int) -> None:
 
 async def invalidate(key: str) -> None:
     await redis.delete(key)
-
-
-
-
-

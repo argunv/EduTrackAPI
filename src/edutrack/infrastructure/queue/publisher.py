@@ -1,5 +1,6 @@
 import json
-from aio_pika import connect_robust, Message, DeliveryMode
+
+from aio_pika import DeliveryMode, Message, connect_robust
 
 from edutrack.config.settings import get_settings
 
@@ -20,8 +21,3 @@ class EmailPublisher:
             )
         finally:
             await connection.close()
-
-
-
-
-

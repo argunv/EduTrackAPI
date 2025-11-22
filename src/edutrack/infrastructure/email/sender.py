@@ -1,9 +1,9 @@
-from aiosmtplib import SMTP
+from collections.abc import Sequence
 from email.message import EmailMessage
-from typing import Sequence
+
+from aiosmtplib import SMTP
 
 from edutrack.config.settings import get_settings
-
 
 settings = get_settings()
 
@@ -27,8 +27,3 @@ async def send_email(recipients: Sequence[str], subject: str, body: str) -> None
         await smtp.send_message(msg)
     finally:
         await smtp.quit()
-
-
-
-
-

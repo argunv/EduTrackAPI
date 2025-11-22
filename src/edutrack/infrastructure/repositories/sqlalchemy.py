@@ -1,18 +1,19 @@
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable, Optional
 from uuid import UUID
+
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from edutrack.domain.repositories import (
-    UserRepository,
-    SchoolRepository,
     ClassRepository,
-    StudentRepository,
-    LessonRepository,
-    GradeRepository,
-    MessageRepository,
     EmailOutboxRepository,
+    GradeRepository,
+    LessonRepository,
+    MessageRepository,
+    SchoolRepository,
+    StudentRepository,
+    UserRepository,
 )
 from edutrack.infrastructure.db import models
 
@@ -21,11 +22,11 @@ class SqlAlchemyUserRepository(UserRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_email(self, email: str) -> Optional[models.User]:
+    async def get_by_email(self, email: str) -> models.User | None:
         stmt = select(models.User).where(models.User.email == email)
         return await self.session.scalar(stmt)
 
-    async def get_by_id(self, user_id: UUID) -> Optional[models.User]:
+    async def get_by_id(self, user_id: UUID) -> models.User | None:
         stmt = select(models.User).where(models.User.id == user_id)
         return await self.session.scalar(stmt)
 
@@ -40,7 +41,7 @@ class SqlAlchemySchoolRepository(SchoolRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_school(self, name: str, address: Optional[str]) -> models.School:
+    async def create_school(self, name: str, address: str | None) -> models.School:
         school = models.School(name=name, address=address)
         self.session.add(school)
         await self.session.flush()
@@ -62,7 +63,7 @@ class SqlAlchemyClassRepository(ClassRepository):
         await self.session.flush()
         return class_
 
-    async def list_classes(self, school_id: Optional[UUID] = None):
+    async def list_classes(self, school_id: UUID | None = None):
         stmt = select(models.Class)
         if school_id:
             stmt = stmt.where(models.Class.school_id == school_id)
@@ -87,7 +88,7 @@ class SqlAlchemyStudentRepository(StudentRepository):
         await self.session.flush()
         return link
 
-    async def get(self, student_id: UUID) -> Optional[models.Student]:
+    async def get(self, student_id: UUID) -> models.Student | None:
         stmt = select(models.Student).where(models.Student.id == student_id)
         return await self.session.scalar(stmt)
 
@@ -119,7 +120,7 @@ class SqlAlchemyGradeRepository(GradeRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_grade(self, student_id: UUID, lesson_id: UUID, value: int, comment: Optional[str]):
+    async def create_grade(self, student_id: UUID, lesson_id: UUID, value: int, comment: str | None):
         grade = models.Grade(student_id=student_id, lesson_id=lesson_id, value=value, comment=comment)
         self.session.add(grade)
         await self.session.flush()
@@ -150,7 +151,7 @@ class SqlAlchemyMessageRepository(MessageRepository):
             self.session.add(models.MessageRecipient(message_id=message_id, recipient_user_id=recipient_id))
         await self.session.flush()
 
-    async def get(self, message_id: UUID) -> Optional[models.Message]:
+    async def get(self, message_id: UUID) -> models.Message | None:
         stmt = select(models.Message).where(models.Message.id == message_id)
         return await self.session.scalar(stmt)
 
@@ -190,11 +191,6 @@ class SqlAlchemyEmailOutboxRepository(EmailOutboxRepository):
         )
         await self.session.execute(stmt)
 
-    async def get_pending(self, outbox_id: UUID) -> Optional[models.EmailOutbox]:
+    async def get_pending(self, outbox_id: UUID) -> models.EmailOutbox | None:
         stmt = select(models.EmailOutbox).where(models.EmailOutbox.id == outbox_id)
         return await self.session.scalar(stmt)
-
-
-
-
-

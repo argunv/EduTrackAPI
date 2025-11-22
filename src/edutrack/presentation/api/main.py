@@ -1,12 +1,12 @@
 import logging
-from fastapi import FastAPI, Depends
+
+from fastapi import Depends, FastAPI
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from edutrack.presentation.api.routes.v1 import router as v1_router
 from edutrack.application.health import check_health
 from edutrack.infrastructure.db.database import get_session
-
+from edutrack.presentation.api.routes.v1 import router as v1_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("edutrack.api")
@@ -26,8 +26,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
-
-
-
-

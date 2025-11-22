@@ -1,11 +1,11 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from edutrack.infrastructure.repositories.sqlalchemy import (
-    SqlAlchemyUserRepository,
     SqlAlchemyStudentRepository,
+    SqlAlchemyUserRepository,
 )
 from edutrack.infrastructure.services.security import hash_password
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class StudentService:
@@ -31,8 +31,3 @@ class StudentService:
 
     async def get(self, student_id: UUID):
         return await self.students.get(student_id)
-
-
-
-
-

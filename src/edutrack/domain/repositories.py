@@ -1,15 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterable, Optional
+from collections.abc import Iterable
+from typing import Any
 from uuid import UUID
 
 
 class UserRepository(ABC):
     @abstractmethod
-    async def get_by_email(self, email: str) -> Optional[Any]:
+    async def get_by_email(self, email: str) -> Any | None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_id(self, user_id: UUID) -> Optional[Any]:
+    async def get_by_id(self, user_id: UUID) -> Any | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -19,7 +20,7 @@ class UserRepository(ABC):
 
 class SchoolRepository(ABC):
     @abstractmethod
-    async def create_school(self, name: str, address: Optional[str]) -> Any:
+    async def create_school(self, name: str, address: str | None) -> Any:
         raise NotImplementedError
 
     @abstractmethod
@@ -33,7 +34,7 @@ class ClassRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def list_classes(self, school_id: Optional[UUID] = None) -> Iterable[Any]:
+    async def list_classes(self, school_id: UUID | None = None) -> Iterable[Any]:
         raise NotImplementedError
 
 
@@ -47,7 +48,7 @@ class StudentRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, student_id: UUID) -> Optional[Any]:
+    async def get(self, student_id: UUID) -> Any | None:
         raise NotImplementedError
 
 
@@ -63,7 +64,7 @@ class LessonRepository(ABC):
 
 class GradeRepository(ABC):
     @abstractmethod
-    async def create_grade(self, student_id: UUID, lesson_id: UUID, value: int, comment: Optional[str]) -> Any:
+    async def create_grade(self, student_id: UUID, lesson_id: UUID, value: int, comment: str | None) -> Any:
         raise NotImplementedError
 
     @abstractmethod
@@ -81,7 +82,7 @@ class MessageRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(self, message_id: UUID) -> Optional[Any]:
+    async def get(self, message_id: UUID) -> Any | None:
         raise NotImplementedError
 
 
@@ -99,10 +100,5 @@ class EmailOutboxRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_pending(self, outbox_id: UUID) -> Optional[Any]:
+    async def get_pending(self, outbox_id: UUID) -> Any | None:
         raise NotImplementedError
-
-
-
-
-

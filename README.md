@@ -33,4 +33,4 @@ poetry run pytest --cov=edutrack
 - RabbitMQ: очередь `email.send`, outbox таблица `email_outbox`.
 
 ## Taskfile
-- `task up|down|db:migrate|test|logs|save-logs|clear-logs`
+- `task up|down|db:migrate|test|logs|save-logs|clear-logs|lint|lint-fix|security|ci`

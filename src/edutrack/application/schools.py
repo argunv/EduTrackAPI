@@ -1,7 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from edutrack.infrastructure.cache.redis import get_cache, set_cache, invalidate
+from edutrack.infrastructure.cache.redis import get_cache, invalidate, set_cache
 from edutrack.infrastructure.repositories.sqlalchemy import SqlAlchemySchoolRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 
 SCHOOLS_CACHE_KEY = "cache:schools"
 SCHOOLS_TTL = 600  # 10 минут
@@ -26,8 +25,3 @@ class SchoolService:
         data = [{"id": str(s.id), "name": s.name, "address": s.address} for s in schools]
         await set_cache(SCHOOLS_CACHE_KEY, data, ttl_seconds=SCHOOLS_TTL)
         return data
-
-
-
-
-
