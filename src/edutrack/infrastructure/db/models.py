@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
+from .base import AssociationBase, Base
 
 
 class UserRole(str, enum.Enum):
@@ -115,7 +115,7 @@ class Guardian(Base):
     students = relationship("StudentGuardian", back_populates="guardian")
 
 
-class StudentGuardian(Base):
+class StudentGuardian(AssociationBase):
     __tablename__ = "student_guardians"
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"), primary_key=True)
     guardian_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("guardians.id"), primary_key=True)
@@ -124,7 +124,7 @@ class StudentGuardian(Base):
     guardian = relationship("Guardian", back_populates="students")
 
 
-class ClassStudent(Base):
+class ClassStudent(AssociationBase):
     __tablename__ = "class_students"
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), primary_key=True)
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"), primary_key=True)
@@ -143,7 +143,7 @@ class Subject(Base):
     lessons = relationship("Lesson", back_populates="subject")
 
 
-class ClassSubject(Base):
+class ClassSubject(AssociationBase):
     __tablename__ = "class_subjects"
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), primary_key=True)
     subject_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("subjects.id"), primary_key=True)
@@ -236,7 +236,7 @@ class Message(Base):
     outbox_entries = relationship("EmailOutbox", back_populates="message")
 
 
-class MessageRecipient(Base):
+class MessageRecipient(AssociationBase):
     __tablename__ = "message_recipients"
 
     message_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("messages.id"), primary_key=True)
