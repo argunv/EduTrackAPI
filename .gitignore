@@ -10,5 +10,4 @@ build/
 pgdata/
 venv/
 *.log
-*.lock
 .automatization/
