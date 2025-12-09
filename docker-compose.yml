@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: edutrack
+      POSTGRES_PASSWORD: edutrack
+      POSTGRES_DB: edutrack
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn edutrack.presentation.api.main:app --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  notifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m edutrack.notifier.main
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport asyncio, os\nfrom aio_pika import connect_robust\nfrom aiosmtplib import SMTP\n\nasync def main():\n    conn = await connect_robust(os.environ.get('RABBITMQ_URL'))\n    await conn.close()\n    smtp = SMTP(hostname=os.environ.get('SMTP_HOST'), port=int(os.environ.get('SMTP_PORT', '587')), use_tls=os.environ.get('SMTP_USE_TLS', 'True') == 'True', username=os.environ.get('SMTP_USER'), password=os.environ.get('SMTP_PASSWORD'))\n    await smtp.connect()\n    await smtp.quit()\n\nasyncio.run(main())\nPY"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: alembic upgrade head
+    profiles: ["migrator"]
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+
