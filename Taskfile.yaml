@@ -1,0 +1,44 @@
+version: "3"
+
+vars:
+  COMPOSE_FILE: docker-compose.yml
+
+tasks:
+  up:
+    desc: "Поднять все сервисы для разработки"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up --build -d
+
+  down:
+    desc: "Остановить и очистить сервисы"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} down -v
+
+  db:migrate:
+    desc: "Применить миграции базы"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} run --rm migrator alembic upgrade head
+
+  test:
+    desc: "Запустить тесты с покрытием"
+    cmds:
+      - poetry run pytest --cov=edutrack --cov-report=term-missing
+
+  logs:
+    desc: "Показать логи API и notifier"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} logs -f api notifier
+
+  save-logs:
+    desc: "Экспорт логов сервисов в конец файла docker-compose.log"
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} logs >> docker-compose.log
+      - echo "Логи сервисов сохранены в конец файла ./docker-compose.log"
+
+  clear-logs:
+    desc: "Очистить файл docker-compose.log"
+    cmds:
+      - >
+        echo "" > docker-compose.log
+      - echo "Файл docker-compose.log очищен"
+
