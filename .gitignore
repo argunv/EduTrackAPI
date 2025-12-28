@@ -16,3 +16,4 @@ htmlcov/
 .cache/
 bandit-report.json
 .DS_Store
+scripts/test_graceful_shutdown_manual.md
