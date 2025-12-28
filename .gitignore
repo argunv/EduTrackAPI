@@ -15,3 +15,4 @@ venv/
 htmlcov/
 .cache/
 bandit-report.json
+.DS_Store
