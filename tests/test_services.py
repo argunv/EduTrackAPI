@@ -1,3 +1,4 @@
+from datetime import UTC
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -6,17 +7,8 @@ from edutrack.application.auth import AuthService
 from edutrack.application.grades import GradeService
 from edutrack.application.messages import MessageService
 from edutrack.application.schools import SchoolService
-
-
-class DummySession:
-    def __init__(self):
-        self.committed = False
-
-    async def commit(self):
-        self.committed = True
-
-    async def execute(self, *args, **kwargs):
-        return None
+from helpers.mocks import DummySession
+from helpers.patches import patch_cache
 
 
 @pytest.mark.asyncio
@@ -42,41 +34,77 @@ async def test_auth_service_success(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_auth_service_invalid_password(monkeypatch):
+    """Тест аутентификации с неправильным паролем."""
+    def mock_verify_password(plain: str, hashed: str) -> bool:
+        return plain == "secret" and hashed == "hashed_secret"
+
+    user = SimpleNamespace(id=uuid4(), password_hash="hashed_secret")
+
+    class Repo:
+        async def get_by_email(self, email):
+            return user
+
+    monkeypatch.setattr(
+        "edutrack.application.auth.verify_password", mock_verify_password
+    )
+
+    service = AuthService(session=None)  # type: ignore
+    service.users = Repo()  # type: ignore
+
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc_info:
+        await service.authenticate(email="user@example.com", password="wrong_password")
+
+    assert exc_info.value.status_code == 401
+    assert "credentials" in exc_info.value.detail.lower()
+
+
+@pytest.mark.asyncio
+async def test_auth_service_user_not_found(monkeypatch):
+    """Тест аутентификации несуществующего пользователя."""
+    def mock_verify_password(plain: str, hashed: str) -> bool:
+        return False
+
+    class Repo:
+        async def get_by_email(self, email):
+            return None
+
+    monkeypatch.setattr(
+        "edutrack.application.auth.verify_password", mock_verify_password
+    )
+
+    service = AuthService(session=None)  # type: ignore
+    service.users = Repo()  # type: ignore
+
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc_info:
+        await service.authenticate(email="nonexistent@example.com", password="secret")
+
+    assert exc_info.value.status_code == 401
+
+
+@pytest.mark.asyncio
 async def test_grade_service_cache(monkeypatch):
     student_id = uuid4()
     cached_payload = [{"id": "1"}]
 
-    async def fake_get_cache(key):
-        return cached_payload
-
-    async def fake_set_cache(key, value, ttl_seconds):
-        raise AssertionError("set_cache should not be called when cache hit")
-
-    async def fake_invalidate(key):
-        pass
-
     class Repo:
-        async def create_grade(self, *args, **kwargs):
-            return SimpleNamespace(
-                id=uuid4(),
-                student_id=student_id,
-                lesson_id=uuid4(),
-                value=5,
-                comment=None,
-                created_at=None,
-            )
-
         async def list_for_student(self, sid):
             return []
 
     session = DummySession()
     service = GradeService(session=session)  # type: ignore
     service.repo = Repo()  # type: ignore
-    monkeypatch.setattr("edutrack.application.grades.get_cache", fake_get_cache)
-    monkeypatch.setattr("edutrack.application.grades.set_cache", fake_set_cache)
-    monkeypatch.setattr("edutrack.application.grades.invalidate", fake_invalidate)
 
-    result = await service.list_grades(student_id)
+    # Используем патч кэша с cache_hit=True
+    async def fake_set_cache(key, value, ttl_seconds):
+        raise AssertionError("set_cache should not be called when cache hit")
+
+    with patch_cache(cache_hit=True, cache_data=cached_payload):
+        monkeypatch.setattr("edutrack.application.grades.set_cache", fake_set_cache)
+        result = await service.list_grades(student_id)
+
     assert result == cached_payload
 
 
@@ -131,25 +159,50 @@ async def test_school_service_caching(monkeypatch):
         async def list_schools(self):
             return [SimpleNamespace(id=uuid4(), name="S1", address=None)]
 
-    called_invalidate = {"cnt": 0}
-
-    async def fake_invalidate(key):
-        called_invalidate["cnt"] += 1
-
-    async def fake_get_cache(key):
-        return None
-
-    async def fake_set_cache(key, value, ttl_seconds):
-        pass
-
     service = SchoolService(session=session)  # type: ignore
     service.repo = Repo()  # type: ignore
-    monkeypatch.setattr("edutrack.application.schools.invalidate", fake_invalidate)
-    monkeypatch.setattr("edutrack.application.schools.get_cache", fake_get_cache)
-    monkeypatch.setattr("edutrack.application.schools.set_cache", fake_set_cache)
 
-    await service.create_school("S1", None)
-    assert called_invalidate["cnt"] == 1
-    assert session.committed is True
-    schools = await service.list_schools()
-    assert len(schools) == 1
+    with patch_cache(cache_hit=False) as cache_mocks:
+        await service.create_school("S1", None)
+        assert len(cache_mocks["invalidate_calls"]) == 1
+        assert session.committed is True
+        schools = await service.list_schools()
+        assert len(schools) == 1
+
+
+@pytest.mark.asyncio
+async def test_grade_service_cache_miss(monkeypatch):
+    """Тест GradeService при отсутствии кэша."""
+    from datetime import datetime
+
+    from helpers.factories import GradeFactory
+
+    student_id = uuid4()
+    grade = GradeFactory.create_grade(
+        student_id=student_id,
+        value=5,
+        comment="Отлично",
+        created_at=datetime.now(UTC)
+    )
+
+    class Repo:
+        async def list_for_student(self, sid):
+            return [grade]
+
+    session = DummySession()
+    service = GradeService(session=session)  # type: ignore
+    service.repo = Repo()  # type: ignore
+
+    with patch_cache(cache_hit=False) as cache_mocks:
+        result = await service.list_grades(student_id)
+
+    # Проверяем, что данные получены из репозитория
+    assert len(result) == 1
+    assert result[0]["id"] == str(grade.id)
+    assert result[0]["value"] == 5
+    assert result[0]["comment"] == "Отлично"
+
+    # Проверяем, что данные сохранены в кэш
+    assert len(cache_mocks["set_calls"]) == 1
+    assert cache_mocks["set_calls"][0]["key"] == f"cache:grades:{student_id}"
+    assert cache_mocks["set_calls"][0]["ttl"] == 60  # GRADES_TTL
