@@ -9,6 +9,11 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edutrack"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -39,11 +44,13 @@ services:
       - .env
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_started
       rabbitmq:
         condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     ports:
       - "127.0.0.1:8000:8000"
     healthcheck:
@@ -63,7 +70,9 @@ services:
       rabbitmq:
         condition: service_healthy
       postgres:
-        condition: service_started
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "python - <<'PY'\nimport asyncio, os\nfrom aio_pika import connect_robust\nfrom aiosmtplib import SMTP\n\nasync def main():\n    conn = await connect_robust(os.environ.get('RABBITMQ_URL'))\n    await conn.close()\n    smtp = SMTP(hostname=os.environ.get('SMTP_HOST'), port=int(os.environ.get('SMTP_PORT', '587')), use_tls=os.environ.get('SMTP_USE_TLS', 'True') == 'True', username=os.environ.get('SMTP_USER'), password=os.environ.get('SMTP_PASSWORD'))\n    await smtp.connect()\n    await smtp.quit()\n\nasyncio.run(main())\nPY"]
@@ -76,12 +85,12 @@ services:
       context: .
       dockerfile: Dockerfile
     command: alembic upgrade head
-    profiles: ["migrator"]
     env_file:
       - .env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   pgdata:
-
