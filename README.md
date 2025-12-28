@@ -15,7 +15,7 @@
 5. Установить зависимости с помощью poetry `poetry install`
 6. Установите утилиту `task` удобной работы с проектом.
 7. `task up` — поднимет Postgres, Redis, RabbitMQ, API и notifier.
-8. `task db:migrate` — применить миграции (или профиль `migrator` в compose).
+8. `task create-superuser` — создайте суперпользователя для полного доступа к API.
 9. Swagger: `http://127.0.0.1:8000/docs`
 
 ## Тесты
@@ -33,4 +33,4 @@ poetry run pytest --cov=edutrack
 - RabbitMQ: очередь `email.send`, outbox таблица `email_outbox`.
 
 ## Taskfile
-- `task up|down|db:migrate|test|logs|save-logs|clear-logs|lint|lint-fix|security|ci`
+- `task up|down|db:migrate|test|logs|save-logs|clear-logs|lint|lint-fix|security|ci|create-superuser`

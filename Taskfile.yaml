@@ -66,3 +66,8 @@ tasks:
       - task: lint
       - task: test
       - task: security
+
+  create-superuser:
+    desc: "Создать суперпользователя"
+    cmds:
+      - poetry run python -m scripts.create_admin
