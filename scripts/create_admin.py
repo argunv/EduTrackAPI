@@ -5,7 +5,7 @@ import asyncio
 import getpass
 import sys
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import text
@@ -15,6 +15,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
 from edutrack.config.settings import Settings
+from edutrack.infrastructure.db.models import UserRole
 from edutrack.infrastructure.services.security import hash_password
 
 
@@ -43,17 +44,34 @@ async def create_superuser():
                 print(f"Ошибка: Пользователь с email '{email}' уже существует")
                 sys.exit(1)
             
+            user_id = uuid.uuid4()
+            created_at = datetime.now(timezone.utc)
+            
+            # Создаем пользователя
             await conn.execute(
                 text("""
-                    INSERT INTO users (id, email, full_name, password_hash, role, created_at)
-                    VALUES (:id, :email, :full_name, :password_hash, 'admin', :created_at)
+                    INSERT INTO users (id, email, full_name, password_hash, created_at)
+                    VALUES (:id, :email, :full_name, :password_hash, :created_at)
                 """),
                 {
-                    "id": uuid.uuid4(),
+                    "id": user_id,
                     "email": email,
                     "full_name": full_name,
                     "password_hash": hash_password(password),
-                    "created_at": datetime.utcnow(),
+                    "created_at": created_at,
+                }
+            )
+            
+            # Назначаем роль admin
+            await conn.execute(
+                text("""
+                    INSERT INTO user_role_assignments (user_id, role, assigned_at)
+                    VALUES (:user_id, :role, :assigned_at)
+                """),
+                {
+                    "user_id": user_id,
+                    "role": UserRole.admin.value,
+                    "assigned_at": created_at,
                 }
             )
         
