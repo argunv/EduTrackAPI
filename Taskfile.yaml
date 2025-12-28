@@ -71,3 +71,13 @@ tasks:
     desc: "Создать суперпользователя"
     cmds:
       - poetry run python -m scripts.create_admin
+
+  load-demo:
+    desc: "Загрузить демонстрационные данные из SQL файла (нужен psql для запуска)"
+    cmds:
+      - sh ./scripts/load_demo.sh
+
+  demo:email:
+    desc: "Запустить демонстрацию работы email сервисов"
+    cmds:
+      - poetry run python scripts/demo/demo_smtp.py

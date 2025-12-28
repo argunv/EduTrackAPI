@@ -32,6 +32,7 @@ COPY pyproject.toml .
 COPY src ./src
 COPY alembic ./alembic
 COPY alembic.ini .
+COPY scripts ./scripts
 
 EXPOSE 8000
 CMD ["uvicorn", "edutrack.presentation.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
