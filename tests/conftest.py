@@ -8,11 +8,10 @@ import pytest
 tests_dir = Path(__file__).parent
 sys.path.insert(0, str(tests_dir))
 
-from helpers.mocks import DummySession
+from helpers.mocks import DummySession  # noqa: E402
 
 
 @pytest.fixture
 async def session():
     """Фикстура для создания мок-сессии БД."""
     return DummySession()
-

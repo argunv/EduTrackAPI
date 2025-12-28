@@ -131,15 +131,15 @@ async def shutdown_handler():
             logger.warning("Таймаут ожидания завершения задач, принудительное завершение")
 
     # Закрываем соединения
-    global connection, channel
-    if channel and not channel.is_closed:
+    # Используем глобальные переменные connection и channel
+    if 'channel' in globals() and channel and not channel.is_closed:
         try:
             await channel.close()
             logger.info("RabbitMQ канал закрыт")
         except Exception as e:
             logger.warning(f"Ошибка при закрытии канала: {e}")
 
-    if connection and not connection.is_closed:
+    if 'connection' in globals() and connection and not connection.is_closed:
         try:
             # Для robust connection нужно сначала отключить автоматическое переподключение
             if hasattr(connection, 'closing'):

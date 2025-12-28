@@ -55,4 +55,3 @@ def patch_cache(cache_hit=False, cache_data=None):
             "set_calls": cache_set_calls,
             "invalidate_calls": invalidate_calls,
         }
-

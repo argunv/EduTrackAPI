@@ -25,4 +25,3 @@ async def assert_http_exception_async(coro, status_code, detail_contains=None):
         assert detail_contains.lower() in exc_info.value.detail.lower()
 
     return exc_info.value
-

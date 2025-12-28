@@ -163,4 +163,3 @@ class RepositoryMocks:
         repo = MessageRepo()
         repo.created_messages = created_messages
         return repo
-

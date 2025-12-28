@@ -508,4 +508,3 @@ async def test_security_create_access_token(monkeypatch):
         expected_exp = now + timedelta(minutes=30)
         # Допускаем разницу в 5 секунд (время выполнения теста)
         assert abs((exp_time - expected_exp).total_seconds()) < 5
-

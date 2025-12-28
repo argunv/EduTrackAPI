@@ -111,4 +111,3 @@ class LessonFactory:
             start_at=kwargs.get("start_at", datetime.now(UTC)),
             end_at=kwargs.get("end_at", datetime.now(UTC)),
         )
-

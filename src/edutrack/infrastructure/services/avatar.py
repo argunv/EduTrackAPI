@@ -28,4 +28,3 @@ def generate_avatar_url(name: str, size: int = 200) -> str:
 
     logger.debug(f"Сгенерирован URL аватара для '{name}' (размер: {size}px)")
     return avatar_url
-
