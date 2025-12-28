@@ -2,7 +2,16 @@ import logging
 from collections.abc import Sequence
 from email.message import EmailMessage
 
-from aiosmtplib import SMTP, SMTPAuthenticationError, SMTPConnectError, SMTPDataError, SMTPException, SMTPRecipientsRefused, SMTPServerDisconnected, SMTPTimeoutError
+from aiosmtplib import (
+    SMTP,
+    SMTPAuthenticationError,
+    SMTPConnectError,
+    SMTPDataError,
+    SMTPException,
+    SMTPRecipientsRefused,
+    SMTPServerDisconnected,
+    SMTPTimeoutError,
+)
 
 from edutrack.config.settings import get_settings
 
@@ -13,7 +22,7 @@ settings = get_settings()
 async def send_email(recipients: Sequence[str], subject: str, body: str) -> None:
     """
     Отправить email через SMTP.
-    
+
     Raises:
         SMTPConnectError: Ошибка подключения к SMTP серверу
         SMTPAuthenticationError: Ошибка аутентификации
@@ -32,7 +41,7 @@ async def send_email(recipients: Sequence[str], subject: str, body: str) -> None
     # Для порта 587 используем STARTTLS (сначала обычное соединение, потом TLS)
     # Для порта 465 используем прямое SSL/TLS соединение
     use_tls_direct = settings.smtp_port == 465
-    
+
     smtp = SMTP(
         hostname=settings.smtp_host,
         port=settings.smtp_port,
@@ -41,7 +50,7 @@ async def send_email(recipients: Sequence[str], subject: str, body: str) -> None
         password=settings.smtp_password,
         timeout=30.0,  # Таймаут 30 секунд
     )
-    
+
     try:
         await smtp.connect()
     except (SMTPConnectError, SMTPTimeoutError) as e:
@@ -50,7 +59,7 @@ async def send_email(recipients: Sequence[str], subject: str, body: str) -> None
     except Exception as e:
         logger.error(f"Неожиданная ошибка при подключении к SMTP: {e}", exc_info=True)
         raise SMTPConnectError(f"Неожиданная ошибка подключения: {e}") from e
-    
+
     # Для порта 587 используем STARTTLS вручную
     # send_message автоматически вызывает login, но STARTTLS нужно вызвать до этого
     if settings.smtp_use_tls and not use_tls_direct:
@@ -73,7 +82,7 @@ async def send_email(recipients: Sequence[str], subject: str, body: str) -> None
         except Exception as e:
             # Если starttls уже был вызван или не нужен, логируем и продолжаем
             logger.debug(f"STARTTLS не требуется или уже установлен: {e}")
-    
+
     try:
         await smtp.send_message(msg)
         logger.info(f"Email успешно отправлен получателям: {', '.join(recipients)}")

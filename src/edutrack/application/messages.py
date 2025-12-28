@@ -38,7 +38,7 @@ class MessageService:
             body=message.body,
         )
         await self.session.commit()
-        
+
         # Пытаемся опубликовать в очередь
         try:
             await self.publisher.publish_outbox(str(outbox_entry.id))
@@ -52,11 +52,11 @@ class MessageService:
             except Exception as commit_error:
                 logger.error(f"Не удалось пометить outbox {outbox_entry.id} как failed: {commit_error}", exc_info=True)
                 await self.session.rollback()
-            
+
             # Поднимаем исключение, чтобы пользователь знал о проблеме
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Сервис очереди временно недоступен. Сообщение сохранено и будет обработано позже."
             ) from e
-        
+
         return outbox_entry

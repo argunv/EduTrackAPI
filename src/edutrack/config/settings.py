@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     smtp_password: str = "password"
     smtp_use_tls: bool = True
     smtp_from: str = "noreply@edutrack.local"
-    
+
     # CORS
     cors_origins: list[str] = Field(default_factory=list, description="Список разрешенных origins для CORS")
 
