@@ -29,7 +29,7 @@ class StudentService:
         user = await self.users.create_user(
             email=email, full_name=full_name, password_hash=hash_password(password), roles=["student"]
         )
-        
+
         # Генерируем аватар из имени пользователя
         try:
             avatar_url = generate_avatar_url(name=full_name, size=200)
@@ -39,7 +39,7 @@ class StudentService:
         except Exception as e:
             # Не блокируем создание пользователя, если аватар не удалось сгенерировать
             logger.warning(f"Не удалось сгенерировать аватар для пользователя {user.id}: {e}")
-        
+
         student = await self.students.create_student(user_id=user.id, school_id=school_id)
         if class_id:
             await self.students.assign_to_class(student_id=student.id, class_id=class_id)

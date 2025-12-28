@@ -27,7 +27,7 @@ async def process_message(message: IncomingMessage, max_retries: int = 3):
     task = asyncio.current_task()
     if task:
         processing_tasks.add(task)
-    
+
     try:
         async with message.process():
             data = json.loads(message.body.decode())
@@ -42,9 +42,8 @@ async def process_message(message: IncomingMessage, max_retries: int = 3):
                 if not entry:
                     logger.warning("Outbox entry %s not found", outbox_id)
                     return
-                
+
                 # Retry логика для отправки email
-                last_error = None
                 for attempt in range(1, max_retries + 1):
                     try:
                         await send_email(entry.recipients, entry.subject, entry.body)
@@ -53,7 +52,6 @@ async def process_message(message: IncomingMessage, max_retries: int = 3):
                         logger.info("Email sent for outbox %s (attempt %d)", outbox_id, attempt)
                         return
                     except Exception as exc:
-                        last_error = exc
                         logger.warning(
                             "Failed to send email for outbox %s (attempt %d/%d): %s",
                             outbox_id,
@@ -87,7 +85,7 @@ async def process_message(message: IncomingMessage, max_retries: int = 3):
 async def connect_with_retry(max_retries: int = 5, initial_delay: float = 1.0):
     """Подключиться к RabbitMQ с retry логикой."""
     global connection, channel
-    
+
     for attempt in range(1, max_retries + 1):
         try:
             connection = await connect_robust(settings.rabbitmq_url)
@@ -119,7 +117,7 @@ async def shutdown_handler():
     """Обработчик graceful shutdown."""
     logger.info("Начало graceful shutdown notifier...")
     shutdown_event.set()
-    
+
     # Ждем завершения обработки текущих сообщений (максимум 30 секунд)
     if processing_tasks:
         logger.info(f"Ожидание завершения {len(processing_tasks)} активных задач...")
@@ -129,9 +127,9 @@ async def shutdown_handler():
                 timeout=30.0,
             )
             logger.info("Все активные задачи завершены")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Таймаут ожидания завершения задач, принудительное завершение")
-    
+
     # Закрываем соединения
     global connection, channel
     if channel and not channel.is_closed:
@@ -140,7 +138,7 @@ async def shutdown_handler():
             logger.info("RabbitMQ канал закрыт")
         except Exception as e:
             logger.warning(f"Ошибка при закрытии канала: {e}")
-    
+
     if connection and not connection.is_closed:
         try:
             # Для robust connection нужно сначала отключить автоматическое переподключение
@@ -150,14 +148,14 @@ async def shutdown_handler():
             logger.info("RabbitMQ соединение закрыто")
         except Exception as e:
             logger.warning(f"Ошибка при закрытии соединения: {e}")
-    
+
     # Закрываем соединения с БД
     try:
         await engine.dispose()
         logger.info("Соединения с БД закрыты")
     except Exception as e:
         logger.error(f"Ошибка при закрытии соединений с БД: {e}", exc_info=True)
-    
+
     logger.info("Graceful shutdown notifier завершен")
 
 
@@ -167,19 +165,19 @@ async def main():
     def signal_handler(sig):
         logger.info(f"Получен сигнал {sig.name}, инициируем graceful shutdown...")
         asyncio.create_task(shutdown_handler())
-    
+
     loop = asyncio.get_event_loop()
     try:
         for sig in (signal.SIGTERM, signal.SIGINT):
             loop.add_signal_handler(sig, lambda s=sig: signal_handler(s))
     except NotImplementedError:
         logger.warning("Обработчики сигналов не поддерживаются на этой платформе")
-    
+
     try:
         # Подключаемся к RabbitMQ с retry
-        queue = await connect_with_retry()
+        await connect_with_retry()
         logger.info("Notifier started, waiting for messages...")
-        
+
         # Ждем сигнала завершения
         await shutdown_event.wait()
     except KeyboardInterrupt:
