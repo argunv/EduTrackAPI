@@ -69,7 +69,7 @@ exclude = [
     ".venv/",
     "build/",
     "dist/",
-    "*.egg-info/",
+    ".*\\.egg-info/",
 ]
 
 [build-system]
