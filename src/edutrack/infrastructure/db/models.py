@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import AssociationBase, Base
+from .base import Base, UUIDMixin
 
 
 class UserRole(str, enum.Enum):
@@ -38,7 +38,7 @@ class MessageDeliveryStatus(str, enum.Enum):
     failed = "failed"
 
 
-class User(Base):
+class User(Base, UUIDMixin):
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
@@ -52,7 +52,7 @@ class User(Base):
     guardian_profile = relationship("Guardian", back_populates="user", uselist=False)
 
 
-class School(Base):
+class School(Base, UUIDMixin):
     __tablename__ = "schools"
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -63,7 +63,7 @@ class School(Base):
     students = relationship("Student", back_populates="school")
 
 
-class Class(Base):
+class Class(Base, UUIDMixin):
     __tablename__ = "classes"
 
     school_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("schools.id"), nullable=False)
@@ -79,7 +79,7 @@ class Class(Base):
     __table_args__ = (UniqueConstraint("school_id", "name", name="uq_class_school_name"),)
 
 
-class Student(Base):
+class Student(Base, UUIDMixin):
     __tablename__ = "students"
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
@@ -94,7 +94,7 @@ class Student(Base):
     submissions = relationship("HomeworkSubmission", back_populates="student")
 
 
-class Teacher(Base):
+class Teacher(Base, UUIDMixin):
     __tablename__ = "teachers"
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
@@ -107,7 +107,7 @@ class Teacher(Base):
     lessons = relationship("Lesson", back_populates="teacher")
 
 
-class Guardian(Base):
+class Guardian(Base, UUIDMixin):
     __tablename__ = "guardians"
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
@@ -115,7 +115,7 @@ class Guardian(Base):
     students = relationship("StudentGuardian", back_populates="guardian")
 
 
-class StudentGuardian(AssociationBase):
+class StudentGuardian(Base):
     __tablename__ = "student_guardians"
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"), primary_key=True)
     guardian_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("guardians.id"), primary_key=True)
@@ -124,7 +124,7 @@ class StudentGuardian(AssociationBase):
     guardian = relationship("Guardian", back_populates="students")
 
 
-class ClassStudent(AssociationBase):
+class ClassStudent(Base):
     __tablename__ = "class_students"
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), primary_key=True)
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"), primary_key=True)
@@ -133,7 +133,7 @@ class ClassStudent(AssociationBase):
     student = relationship("Student", back_populates="classes")
 
 
-class Subject(Base):
+class Subject(Base, UUIDMixin):
     __tablename__ = "subjects"
 
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
@@ -143,7 +143,7 @@ class Subject(Base):
     lessons = relationship("Lesson", back_populates="subject")
 
 
-class ClassSubject(AssociationBase):
+class ClassSubject(Base):
     __tablename__ = "class_subjects"
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), primary_key=True)
     subject_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("subjects.id"), primary_key=True)
@@ -154,7 +154,7 @@ class ClassSubject(AssociationBase):
     teacher = relationship("Teacher", back_populates="subjects")
 
 
-class Lesson(Base):
+class Lesson(Base, UUIDMixin):
     __tablename__ = "lessons"
 
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), nullable=False)
@@ -172,7 +172,7 @@ class Lesson(Base):
     homework = relationship("Homework", back_populates="lesson", uselist=False)
 
 
-class Grade(Base):
+class Grade(Base, UUIDMixin):
     __tablename__ = "grades"
 
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"), nullable=False)
@@ -185,7 +185,7 @@ class Grade(Base):
     lesson = relationship("Lesson", back_populates="grades")
 
 
-class Attendance(Base):
+class Attendance(Base, UUIDMixin):
     __tablename__ = "attendance"
 
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("students.id"), nullable=False)
@@ -197,7 +197,7 @@ class Attendance(Base):
     lesson = relationship("Lesson", back_populates="attendance")
 
 
-class Homework(Base):
+class Homework(Base, UUIDMixin):
     __tablename__ = "homeworks"
 
     lesson_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("lessons.id"), nullable=False, unique=True)
@@ -208,7 +208,7 @@ class Homework(Base):
     submissions = relationship("HomeworkSubmission", back_populates="homework")
 
 
-class HomeworkSubmission(Base):
+class HomeworkSubmission(Base, UUIDMixin):
     __tablename__ = "homework_submissions"
 
     homework_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("homeworks.id"), nullable=False)
@@ -223,7 +223,7 @@ class HomeworkSubmission(Base):
     __table_args__ = (UniqueConstraint("homework_id", "student_id", name="uq_homework_submission"),)
 
 
-class Message(Base):
+class Message(Base, UUIDMixin):
     __tablename__ = "messages"
 
     sender_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
@@ -236,7 +236,7 @@ class Message(Base):
     outbox_entries = relationship("EmailOutbox", back_populates="message")
 
 
-class MessageRecipient(AssociationBase):
+class MessageRecipient(Base):
     __tablename__ = "message_recipients"
 
     message_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("messages.id"), primary_key=True)
@@ -247,7 +247,7 @@ class MessageRecipient(AssociationBase):
     recipient_user = relationship("User")
 
 
-class EmailOutbox(Base):
+class EmailOutbox(Base, UUIDMixin):
     __tablename__ = "email_outbox"
 
     message_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=False)
