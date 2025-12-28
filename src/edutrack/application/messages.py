@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from uuid import UUID
 
@@ -8,6 +9,8 @@ from edutrack.infrastructure.repositories.sqlalchemy import (
 )
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 
 class MessageService:
@@ -35,5 +38,25 @@ class MessageService:
             body=message.body,
         )
         await self.session.commit()
-        await self.publisher.publish_outbox(str(outbox_entry.id))
+        
+        # Пытаемся опубликовать в очередь
+        try:
+            await self.publisher.publish_outbox(str(outbox_entry.id))
+        except Exception as e:
+            # Если публикация не удалась, помечаем outbox как failed
+            error_msg = f"Ошибка публикации в RabbitMQ: {str(e)}"
+            logger.error(f"Не удалось опубликовать сообщение {outbox_entry.id} в очередь: {e}", exc_info=True)
+            try:
+                await self.outbox.mark_failed(outbox_entry.id, error_msg)
+                await self.session.commit()
+            except Exception as commit_error:
+                logger.error(f"Не удалось пометить outbox {outbox_entry.id} как failed: {commit_error}", exc_info=True)
+                await self.session.rollback()
+            
+            # Поднимаем исключение, чтобы пользователь знал о проблеме
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Сервис очереди временно недоступен. Сообщение сохранено и будет обработано позже."
+            ) from e
+        
         return outbox_entry
