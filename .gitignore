@@ -12,3 +12,6 @@ venv/
 *.log
 .automatization/
 .ruff_cache/
+htmlcov/
+.cache/
+bandit-report.json
